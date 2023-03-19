@@ -48,7 +48,7 @@
     !
     ! file names
     !
-    character(len=128), parameter           :: datadir = '../../../data/'
+    character(len=128), parameter           :: datadir = 'data/'
     character(len=128)                      :: input_file, &  
                                                output_file    
 #if defined(NON_NEWT)
