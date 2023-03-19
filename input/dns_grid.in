@@ -1,0 +1,5 @@
+0.0625d0 0.5d0 1.d0    ! lx, ly, lz
+4 16 32                ! input  nx, ny, nz
+4 32 64                ! output nx, ny, nz
+fld_i.bin              ! input filename
+fld_o.bin              ! output filename
