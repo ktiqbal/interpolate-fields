@@ -52,3 +52,7 @@ FFLAGS := -fast
 endif
   
 endif
+
+## CPP FLAGS
+FFLAGS += -cpp
+FFLAGS += -DNON_NEWT

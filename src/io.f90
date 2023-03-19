@@ -2,7 +2,7 @@ module mod_io
   use mpi_f08
   use mod_common, only: rp,MPI_REAL_RP,ierr
   private
-  public load
+  public load, load_single, load_nfld
 contains
   subroutine load(io,filename,comm,myid,ng,nh,lo,hi,u,v,w,p,time,istep)
     !
@@ -75,6 +75,144 @@ contains
       call MPI_FILE_CLOSE(fh,ierr)
     end select
   end subroutine load
+  !
+  subroutine load_single(io,filename,comm,myid,ng,nh,lo,hi,p) !,time,istep)
+    !
+    ! reads/writes a restart file
+    !
+    implicit none
+    character(len=1), intent(in) :: io
+    character(len=*), intent(in) :: filename
+    type(MPI_COMM)  , intent(in) :: comm
+    integer         , intent(in) :: myid
+    integer , intent(in), dimension(3) :: ng,nh,lo,hi
+    real(rp), intent(inout), dimension(lo(1)-nh(1):,lo(2)-nh(2):,lo(3)-nh(3):) :: p
+    ! real(rp), intent(inout) :: time
+    ! integer , intent(inout) :: istep
+    real(rp), dimension(2) :: fldinfo
+    type(MPI_FILE) :: fh
+    integer :: nreals_myid
+    integer(kind=MPI_OFFSET_KIND) :: filesize,disp,good
+    !
+    select case(io)
+    case('r')
+      call MPI_FILE_OPEN(comm, filename, &
+           MPI_MODE_RDONLY, MPI_INFO_NULL,fh,ierr)
+      !
+      ! check file size first
+      !
+      call MPI_FILE_GET_SIZE(fh,filesize,ierr)
+      good = (product(int(ng(:),MPI_OFFSET_KIND))*1)*(storage_size(1._rp)/8)
+      if(filesize /= good) then
+        if(myid == 0) print*, ''
+        if(myid == 0) print*, '*** Simulation aborted due a checkpoint file with incorrect size ***'
+        if(myid == 0) print*, '    file: ', filename, ' | expected size: ', good, '| actual size: ', filesize
+        call MPI_FINALIZE(ierr)
+        error stop
+      end if
+      !
+      ! read
+      !
+      disp = 0_MPI_OFFSET_KIND
+      call io_field('r',fh,ng,nh,lo,hi,disp,p)
+      call MPI_FILE_SET_VIEW(fh,disp,MPI_REAL_RP,MPI_REAL_RP,'native',MPI_INFO_NULL,ierr)
+      nreals_myid = 0
+      if(myid == 0) nreals_myid = 2
+      ! call MPI_FILE_READ(fh,fldinfo,nreals_myid,MPI_REAL_RP,MPI_STATUS_IGNORE,ierr)
+      call MPI_FILE_CLOSE(fh,ierr)
+      ! call MPI_BCAST(fldinfo,2,MPI_REAL_RP,0,comm,ierr)
+      ! time  =      fldinfo(1)
+      ! istep = nint(fldinfo(2))
+    case('w')
+      !
+      ! write
+      !
+      call MPI_FILE_OPEN(comm, filename                 , &
+           MPI_MODE_CREATE+MPI_MODE_WRONLY, MPI_INFO_NULL,fh,ierr)
+      filesize = 0_MPI_OFFSET_KIND
+      call MPI_FILE_SET_SIZE(fh,filesize,ierr)
+      disp = 0_MPI_OFFSET_KIND
+      call io_field('w',fh,ng,nh,lo,hi,disp,p)
+      call MPI_FILE_SET_VIEW(fh,disp,MPI_REAL_RP,MPI_REAL_RP,'native',MPI_INFO_NULL,ierr)
+      ! fldinfo = [time,1._rp*istep]
+      nreals_myid = 0
+      if(myid == 0) nreals_myid = 2
+      ! call MPI_FILE_WRITE(fh,fldinfo,nreals_myid,MPI_REAL_RP,MPI_STATUS_IGNORE,ierr)
+      call MPI_FILE_CLOSE(fh,ierr)
+    end select
+  end subroutine load_single
+  !
+  subroutine load_nfld(io,filename,comm,myid,ng,nh,lo,hi,p,nfld) !,time,istep)
+    !
+    ! reads/writes a restart file
+    !
+    implicit none
+    character(len=1), intent(in) :: io
+    character(len=*), intent(in) :: filename
+    type(MPI_COMM)  , intent(in) :: comm
+    integer         , intent(in) :: myid
+    integer         , intent(in) :: nfld
+    integer , intent(in), dimension(3) :: ng,nh,lo,hi
+    real(rp), intent(inout), dimension(lo(1)-nh(1):,lo(2)-nh(2):,lo(3)-nh(3):,1:) :: p
+    ! real(rp), intent(inout) :: time
+    ! integer , intent(inout) :: istep
+    real(rp), dimension(2) :: fldinfo
+    type(MPI_FILE) :: fh
+    integer :: nreals_myid
+    integer(kind=MPI_OFFSET_KIND) :: filesize,disp,good
+    integer :: i
+    !
+    select case(io)
+    case('r')
+      call MPI_FILE_OPEN(comm, filename, &
+           MPI_MODE_RDONLY, MPI_INFO_NULL,fh,ierr)
+      !
+      ! check file size first
+      !
+      call MPI_FILE_GET_SIZE(fh,filesize,ierr)
+      good = (product(int(ng(:),MPI_OFFSET_KIND))*nfld)*(storage_size(1._rp)/8)
+      if(filesize /= good) then
+        if(myid == 0) print*, ''
+        if(myid == 0) print*, '*** Simulation aborted due a checkpoint file with incorrect size ***'
+        if(myid == 0) print*, '    file: ', filename, ' | expected size: ', good, '| actual size: ', filesize
+        call MPI_FINALIZE(ierr)
+        error stop
+      end if
+      !
+      ! read
+      !
+      disp = 0_MPI_OFFSET_KIND
+      do i=1,nfld
+        call io_field('r',fh,ng,nh,lo,hi,disp,p(lo(1)-nh(1):,lo(2)-nh(2):,lo(3)-nh(3):,i))
+      enddo
+      call MPI_FILE_SET_VIEW(fh,disp,MPI_REAL_RP,MPI_REAL_RP,'native',MPI_INFO_NULL,ierr)
+      nreals_myid = 0
+      if(myid == 0) nreals_myid = 2
+      ! call MPI_FILE_READ(fh,fldinfo,nreals_myid,MPI_REAL_RP,MPI_STATUS_IGNORE,ierr)
+      call MPI_FILE_CLOSE(fh,ierr)
+      ! call MPI_BCAST(fldinfo,2,MPI_REAL_RP,0,comm,ierr)
+      ! time  =      fldinfo(1)
+      ! istep = nint(fldinfo(2))
+    case('w')
+      !
+      ! write
+      !
+      call MPI_FILE_OPEN(comm, filename                 , &
+           MPI_MODE_CREATE+MPI_MODE_WRONLY, MPI_INFO_NULL,fh,ierr)
+      filesize = 0_MPI_OFFSET_KIND
+      call MPI_FILE_SET_SIZE(fh,filesize,ierr)
+      disp = 0_MPI_OFFSET_KIND
+      do i=1,nfld
+        call io_field('w',fh,ng,nh,lo,hi,disp,p(lo(1)-nh(1):,lo(2)-nh(2):,lo(3)-nh(3):,i))
+      enddo
+      call MPI_FILE_SET_VIEW(fh,disp,MPI_REAL_RP,MPI_REAL_RP,'native',MPI_INFO_NULL,ierr)
+      ! fldinfo = [time,1._rp*istep]
+      nreals_myid = 0
+      if(myid == 0) nreals_myid = 2
+      ! call MPI_FILE_WRITE(fh,fldinfo,nreals_myid,MPI_REAL_RP,MPI_STATUS_IGNORE,ierr)
+      call MPI_FILE_CLOSE(fh,ierr)
+    end select
+  end subroutine load_nfld
   !
   subroutine io_field(io,fh,ng,nh,lo,hi,disp,var)
     implicit none
