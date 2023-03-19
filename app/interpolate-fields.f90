@@ -7,13 +7,12 @@
     !
     ! input domain parameters
     !
-    ! real(rp), parameter,       dimension(3) :: l     = [0.0625_rp,0.5_rp,1._rp]
-    real(rp),        dimension(3) :: l     != [0.0625_rp,1._rp,1._rp]
-    integer ,        dimension(3) :: ni    != [4,32,64]
-    integer ,        dimension(3) :: no    != [4,128,256]
-    real(rp),        dimension(3) :: dlo   != l(:)/no(:)
-    real(rp),        dimension(3) :: dli   != l(:)/ni(:)
-    integer                                 :: iunit
+    real(rp),        dimension(3) :: l     
+    integer ,        dimension(3) :: ni   
+    integer ,        dimension(3) :: no   
+    real(rp),        dimension(3) :: dlo   
+    real(rp),        dimension(3) :: dli   
+    integer                       :: iunit
     !
     ! boundary conditions
     !
@@ -34,8 +33,8 @@
       reshape(['P','P','P','P','N','N'],shape(cbcpre))
     real(rp)        , parameter, dimension(0:1,3) ::  bcpre = &
       reshape([0._rp,0._rp,0._rp,0._rp,0._rp,0._rp],shape(bcpre))
-#if defined(NON_NEWT)
     !
+#if defined(NON_NEWT)
     ! stress tensor
     character(len=1), parameter, dimension(0:1,3) :: cbcC_Po = &
       reshape(['P','P','P','P','N','N'],shape(cbcC_Po))
@@ -49,12 +48,12 @@
     !
     ! file names
     !
-    character(len=128), parameter           :: datadir = 'data/'
-    character(len=128)                      :: input_file, &   != 'data/fld00100000', &
-                                               output_file     != 'data/fld_o.bin'
+    character(len=128), parameter           :: datadir = '../../../data/'
+    character(len=128)                      :: input_file, &  
+                                               output_file    
 #if defined(NON_NEWT)
-    character(len=128)                      :: input_file_C_Po, & !  = 'data/fls00100000', &
-                                               output_file_C_Po   != 'data/fls_o.bin'
+    character(len=128)                      :: input_file_C_Po, & 
+                                               output_file_C_Po   
 #endif
     !
     ! local problem sizes
@@ -79,6 +78,7 @@
 #endif
     real(rp)                                :: time
     integer                                 :: istep
+    integer                                 :: i
     !
     ! other variables
     !
@@ -170,7 +170,6 @@
     !
     ! read input data
     !
-    ! call load('r',input_file,MPI_COMM_WORLD,myid,ni,[1,1,1],lo_i,hi_i,ui,vi,wi,pi,time,istep)
     call load('r',input_file,MPI_COMM_WORLD,myid,ni,[1,1,1],lo_i,hi_i,ui,vi,wi,pi,time,istep)
 #if defined(NON_NEWT)
     call load_nfld('r',input_file_C_Po,MPI_COMM_WORLD,myid,ni,[1,1,1],lo_i,hi_i,C_Poi,6)
@@ -200,18 +199,10 @@
       call set_bc(cbcvel(0,1,3),0,1,1,.true. ,bcvel(0,1,3),dli(1),wi)
       call set_bc(cbcpre(0,1  ),0,1,1,.true. ,bcpre(0,1  ),dli(1),pi)
 #if defined(NON_NEWT)
-      call set_bc(cbcC_Po(0,1  ),0,1,1,.true. ,bcC_Po(0,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,1))
-      call set_bc(cbcC_Po(0,1  ),0,1,1,.true. ,bcC_Po(0,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,2))
-      call set_bc(cbcC_Po(0,1  ),0,1,1,.true. ,bcC_Po(0,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,3))
-      call set_bc(cbcC_Po(0,1  ),0,1,1,.true. ,bcC_Po(0,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,4))
-      call set_bc(cbcC_Po(0,1  ),0,1,1,.true. ,bcC_Po(0,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,5))
-      call set_bc(cbcC_Po(0,1  ),0,1,1,.true. ,bcC_Po(0,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,6))
+      do i=1,6
+        call set_bc(cbcC_Po(0,1  ),0,1,1,.true. ,bcC_Po(0,1  ),dli(1), & 
+                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,i))
+      enddo
 #endif
     end if
     if(is_bound(1,1)) then
@@ -220,18 +211,10 @@
       call set_bc(cbcvel(1,1,3),1,1,1,.true. ,bcvel(1,1,3),dli(1),wi)
       call set_bc(cbcpre(1,1  ),1,1,1,.true. ,bcpre(1,1  ),dli(1),pi)
 #if defined(NON_NEWT)
-      call set_bc(cbcC_Po(1,1  ),1,1,1,.true. ,bcC_Po(1,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,1))
-      call set_bc(cbcC_Po(1,1  ),1,1,1,.true. ,bcC_Po(1,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,2))
-      call set_bc(cbcC_Po(1,1  ),1,1,1,.true. ,bcC_Po(1,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,3))
-      call set_bc(cbcC_Po(1,1  ),1,1,1,.true. ,bcC_Po(1,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,4))
-      call set_bc(cbcC_Po(1,1  ),1,1,1,.true. ,bcC_Po(1,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,5))
-      call set_bc(cbcC_Po(1,1  ),1,1,1,.true. ,bcC_Po(1,1  ),dli(1), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,6))
+      do i=1,6
+        call set_bc(cbcC_Po(1,1  ),1,1,1,.true. ,bcC_Po(1,1  ),dli(1), & 
+                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,i))
+      enddo
 #endif
     end if
     if(is_bound(0,2)) then
@@ -240,18 +223,10 @@
       call set_bc(cbcvel(0,2,3),0,2,1,.true. ,bcvel(0,2,3),dli(2),wi)
       call set_bc(cbcpre(0,2  ),0,2,1,.true. ,bcpre(0,2  ),dli(2),pi)
 #if defined(NON_NEWT)
-      call set_bc(cbcC_Po(0,2  ),0,2,1,.true. ,bcC_Po(0,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,1))
-      call set_bc(cbcC_Po(0,2  ),0,2,1,.true. ,bcC_Po(0,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,2))
-      call set_bc(cbcC_Po(0,2  ),0,2,1,.true. ,bcC_Po(0,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,3))
-      call set_bc(cbcC_Po(0,2  ),0,2,1,.true. ,bcC_Po(0,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,4))
-      call set_bc(cbcC_Po(0,2  ),0,2,1,.true. ,bcC_Po(0,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,5))
-      call set_bc(cbcC_Po(0,2  ),0,2,1,.true. ,bcC_Po(0,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,6))
+      do i=1,6
+        call set_bc(cbcC_Po(0,2  ),0,2,1,.true. ,bcC_Po(0,2  ),dli(2), & 
+                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,i))
+      enddo
 #endif
      end if
     if(is_bound(1,2)) then
@@ -260,18 +235,10 @@
       call set_bc(cbcvel(1,2,3),1,2,1,.true. ,bcvel(1,2,3),dli(2),wi)
       call set_bc(cbcpre(1,2  ),1,2,1,.true. ,bcpre(1,2  ),dli(2),pi)
 #if defined(NON_NEWT)
-      call set_bc(cbcC_Po(1,2  ),1,2,1,.true. ,bcC_Po(1,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,1))
-      call set_bc(cbcC_Po(1,2  ),1,2,1,.true. ,bcC_Po(1,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,2))
-      call set_bc(cbcC_Po(1,2  ),1,2,1,.true. ,bcC_Po(1,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,3))
-      call set_bc(cbcC_Po(1,2  ),1,2,1,.true. ,bcC_Po(1,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,4))
-      call set_bc(cbcC_Po(1,2  ),1,2,1,.true. ,bcC_Po(1,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,5))
-      call set_bc(cbcC_Po(1,2  ),1,2,1,.true. ,bcC_Po(1,2  ),dli(2), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,6))
+      do i=1,6
+        call set_bc(cbcC_Po(1,2  ),1,2,1,.true. ,bcC_Po(1,2  ),dli(2), & 
+                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,i))
+      enddo
 #endif
     end if
     if(is_bound(0,3)) then
@@ -280,18 +247,10 @@
       call set_bc(cbcvel(0,3,3),0,3,1,.false.,bcvel(0,3,3),dli(3),wi)
       call set_bc(cbcpre(0,3  ),0,3,1,.true. ,bcpre(0,3  ),dli(3),pi)
 #if defined(NON_NEWT)
-      call set_bc(cbcC_Po(0,3  ),0,3,1,.true. ,bcC_Po(0,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,1))
-      call set_bc(cbcC_Po(0,3  ),0,3,1,.true. ,bcC_Po(0,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,2))
-      call set_bc(cbcC_Po(0,3  ),0,3,1,.true. ,bcC_Po(0,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,3))
-      call set_bc(cbcC_Po(0,3  ),0,3,1,.true. ,bcC_Po(0,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,4))
-      call set_bc(cbcC_Po(0,3  ),0,3,1,.true. ,bcC_Po(0,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,5))
-      call set_bc(cbcC_Po(0,3  ),0,3,1,.true. ,bcC_Po(0,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,6))
+      do i=1,6
+        call set_bc(cbcC_Po(0,3  ),0,3,1,.true. ,bcC_Po(0,3  ),dli(3), & 
+                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,i))
+      enddo
 #endif
     end if
     if(is_bound(1,3)) then
@@ -300,18 +259,10 @@
       call set_bc(cbcvel(1,3,3),1,3,1,.false.,bcvel(1,3,3),dli(3),wi)
       call set_bc(cbcpre(1,3  ),1,3,1,.true. ,bcpre(1,3  ),dli(3),pi)
 #if defined(NON_NEWT)
-      call set_bc(cbcC_Po(1,3  ),1,3,1,.true. ,bcC_Po(1,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,1))
-      call set_bc(cbcC_Po(1,3  ),1,3,1,.true. ,bcC_Po(1,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,2))
-      call set_bc(cbcC_Po(1,3  ),1,3,1,.true. ,bcC_Po(1,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,3))
-      call set_bc(cbcC_Po(1,3  ),1,3,1,.true. ,bcC_Po(1,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,4))
-      call set_bc(cbcC_Po(1,3  ),1,3,1,.true. ,bcC_Po(1,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,5))
-      call set_bc(cbcC_Po(1,3  ),1,3,1,.true. ,bcC_Po(1,3  ),dli(3), & 
-                  C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,6))
+      do i=1,6
+        call set_bc(cbcC_Po(1,3  ),1,3,1,.true. ,bcC_Po(1,3  ),dli(3), & 
+                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,i))
+      enddo
 #endif
     end if
     !
@@ -322,27 +273,13 @@
     call interp_fld([.false.,.false.,.true. ],lo_i,lo_o,hi_o,dli,dlo,wi,wo)
     call interp_fld([.false.,.false.,.false.],lo_i,lo_o,hi_o,dli,dlo,pi,po)
 #if defined(NON_NEWT)
-    call interp_fld([.false.,.false.,.false.],lo_i,lo_o,hi_o,dli,dlo, & 
-                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,1), & 
-                    C_Poo(0:nno(1)+1,0:nno(2)+1,0:nno(3)+1,1))
-    call interp_fld([.false.,.false.,.false.],lo_i,lo_o,hi_o,dli,dlo, & 
-                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,2), & 
-                    C_Poo(0:nno(1)+1,0:nno(2)+1,0:nno(3)+1,2))
-    call interp_fld([.false.,.false.,.false.],lo_i,lo_o,hi_o,dli,dlo, & 
-                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,3), & 
-                    C_Poo(0:nno(1)+1,0:nno(2)+1,0:nno(3)+1,3))
-    call interp_fld([.false.,.false.,.false.],lo_i,lo_o,hi_o,dli,dlo, & 
-                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,4), & 
-                    C_Poo(0:nno(1)+1,0:nno(2)+1,0:nno(3)+1,4))
-    call interp_fld([.false.,.false.,.false.],lo_i,lo_o,hi_o,dli,dlo, & 
-                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,5), & 
-                    C_Poo(0:nno(1)+1,0:nno(2)+1,0:nno(3)+1,5))
-    call interp_fld([.false.,.false.,.false.],lo_i,lo_o,hi_o,dli,dlo, & 
-                    C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,6), & 
-                    C_Poo(0:nno(1)+1,0:nno(2)+1,0:nno(3)+1,6))
+    do i=1,6
+      call interp_fld([.false.,.false.,.false.],lo_i,lo_o,hi_o,dli,dlo, & 
+                      C_Poi(0:nni(1)+1,0:nni(2)+1,0:nni(3)+1,i), & 
+                      C_Poo(0:nno(1)+1,0:nno(2)+1,0:nno(3)+1,i))
+    enddo
 #endif
     !
-    ! call load('w',output_file,MPI_COMM_WORLD,myid,no,[1,1,1],lo_o,hi_o,uo,vo,wo,po,time,istep)
     call load('w',output_file,MPI_COMM_WORLD,myid,no,[1,1,1],lo_o,hi_o,uo,vo,wo,po,time,istep)
 #if defined(NON_NEWT)
     call load_nfld('w',output_file_C_Po,MPI_COMM_WORLD,myid,no,[1,1,1],lo_o,hi_o,C_Poo,6)
