@@ -31,6 +31,10 @@ ifeq "$(ARCH)" "INTEL"
 FFLAGS := -O3
 endif
 
+ifeq "$(ARCH)" "CRAY"
+FFLAGS := -O3
+endif
+
 ifeq "$(ARCH)" "NVIDIA"
 FFLAGS := -O3
 endif
