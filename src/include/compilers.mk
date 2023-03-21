@@ -1,5 +1,5 @@
 ifeq "$(ARCH)" "GNU"
-FC = mpifort
+FC = mpif90
 endif
 ifeq "$(ARCH)" "INTEL"
 FC = mpiifort
