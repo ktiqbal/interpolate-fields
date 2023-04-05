@@ -1,0 +1,2 @@
+bound.o : common.o
+io.o : common.o
