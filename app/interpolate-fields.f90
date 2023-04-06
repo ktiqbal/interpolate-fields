@@ -284,6 +284,7 @@
 #if defined(NON_NEWT)
     call load_nfld('w',output_file_C_Po,MPI_COMM_WORLD,myid,no,[1,1,1],lo_o,hi_o,C_Poo,6)
 #endif
+    if (myid.eq.0) print*, "*** Fim ***"
     call MPI_FINALIZE(ierr)
   contains
     subroutine interp_fld(is_staggered,lo_i,lo_o,hi_o,dli,dlo,fldi,fldo)
