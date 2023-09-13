@@ -24,12 +24,15 @@ MAIN_SRC = interpolate-fields.f90
 
 APPDIR = ../app
 EXEDIR = ../exe
+DATADIR = $(EXEDIR)/data
 
 ##############################################################
 
 TARGET = interpit
 
 all: $(TARGET)
+	mkdir -p $(EXEDIR)
+	mkdir -p $(DATADIR)
 	mv $(TARGET) $(EXEDIR)
 
 $(APPDIR)/$(patsubst %.f90,%.o,$(MAIN_SRC)): $(APPDIR)/$(MAIN_SRC) $(OBJS)
